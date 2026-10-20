@@ -112,8 +112,8 @@ if [[ ! -f "$IMAGE_PATH" ]]; then
 fi
 run_cmd qm importdisk "$VM_ID" "$IMAGE_PATH" "$STORAGE"
 
-# Step 3: Attach the imported disk as SCSI disk
-echo "Step 3: Attaching disk as SCSI disk..."
+# Step 3: Attach the imported disk as SCSI disk and resize the imported OS disk
+echo "Step 3: Attaching disk as SCSI disk... and resizing OS disk to ${DISK_GB} GB..."
 if [[ "$DRY_RUN" == false ]]; then
     # Get the unused volume that corresponds to the imported disk
     UNUSED_VOL=$(qm config "$VM_ID" | grep -oP 'unused0:\s*\K\S+')
@@ -122,8 +122,9 @@ if [[ "$DRY_RUN" == false ]]; then
         exit 1
     fi
     run_cmd qm set "$VM_ID" --scsi0 "$UNUSED_VOL"
+    run_cmd qm resize "$VM_ID" scsi0 "${DISK_GB}G"
 else
-    echo "[DRY-RUN] Would attach unused disk as scsi0 (unused0 -> ${STORAGE}:vm-${VM_ID}-disk-0.raw)"
+    echo "[DRY-RUN] Would attach unused disk as scsi0 (unused0 -> ${STORAGE}:vm-${VM_ID}-disk-0.raw) and resize scsi0 to ${DISK_GB}G"
 fi
 run_cmd qm set "$VM_ID" --boot order=scsi0
 # Also add a cloud-init drive
