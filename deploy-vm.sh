@@ -104,8 +104,11 @@ run_cmd qm create "$VM_ID" --memory "$RAM_MB" --cores "$CPU_CORES" --name "$VM_N
 
 # Step 2: Import the cloud-init image
 echo "Step 2: Importing cloud-init image..."
-# Assumes the image is located at ./img/ubuntu-20.04-server-cloudimg-amd64.img relative to this script
-IMAGE_PATH="$(dirname "$0")/img/ubuntu-20.04-server-cloudimg-amd64.img"
+# IMAGE_PATH must be set in the config file or environment
+if [[ -z "$IMAGE_PATH" ]]; then
+    echo "Error: IMAGE_PATH is not set. Please set it in your config file or environment."
+    exit 1
+fi
 if [[ ! -f "$IMAGE_PATH" ]]; then
     echo "Error: Cloud image not found at $IMAGE_PATH"
     exit 1
@@ -133,8 +136,9 @@ run_cmd qm set "$VM_ID" --ide2 "$STORAGE:cloudinit"
 # Step 4: Configure cloud-init
 echo "Step 4: Configuring cloud-init..."
 # Set the CI user (default is ubuntu) and SSH key
+CI_USER="${CI_USER:-ubuntu}"
 if [[ -n "$VM_SSH_PUB_KEY_PATH" && -f "$VM_SSH_PUB_KEY_PATH" ]]; then
-    run_cmd qm set "$VM_ID" --ciuser ubuntu --sshkey "$VM_SSH_PUB_KEY_PATH"
+    run_cmd qm set "$VM_ID" --ciuser "$CI_USER" --sshkey "$VM_SSH_PUB_KEY_PATH"
 else
     echo "Warning: SSH key file not found at $VM_SSH_PUB_KEY_PATH. Skipping SSH key setup."
 fi
